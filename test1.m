@@ -1,18 +1,17 @@
-N = 30;         % of subcarriers
+N = 30;             % of subcarriers
 N_hlf = 15;
-M = 3;          % of antennas
+M = 3;              % of antennas
 
-c = 3e10;        %cm/s
-f = 5320e6;     %Hz
-f_delta = 1250e3;   %Hz
-d = 1;           %cm
+c = 3e10;           % cm/s
+f = 5320e6;         % Hz
+f_delta = 1250e3;   % Hz
+d = 1;              % cm
 
 D = 2*pi*d*f/c;
+D_1 = 2*pi*f_delta/c
 
 n_thres = 4;
 %threshold = ???
-
-clf
 
 x = [1:N];
 hlf1 = [1 : N_hlf]; hlf2 = [(N_hlf+1) : N];
@@ -28,8 +27,6 @@ for j = 1:1
     
     csi(2,:,:) = [];                                    % making complex matrix 3*30
     csi = reshape(csi,[M N]);                           %
-
-
 
     y1_1 = [angle(csi(1,hlf1))];                        %y(i)_j - i-th antenna
     y1_1 = unwrap(y1_1);                               % and j-th half of spectum
@@ -74,7 +71,7 @@ for j = 1:1
 
     plot(x,y1,'red', x,y2,'blue', x,y3,'black');
     hold on
-    grid onexp(i*(1:14)*Tau
+    grid on
     %}
     
     
@@ -86,36 +83,36 @@ for j = 1:1
 
     X = [csi1,csi2;csi2,csi3];
     
-    [E_N,eigv] = eig(X*X');
-    
     E_N(:,n_thres+1:N) = [];
     
-    Tau_res = 200; theta_res = 200;
-    Tau_max = 2*pi/12; theta_max = pi/2;
-    n_Tau = 0; n_theta = 0;                 % Tau = 2*pi*f_delta* tau
-    P = zeros(theta_res,Tau_res);
+    dist_res = 100; theta_res = 200;
+    dist_min = 0; dist_max = 2000;    % Maximum distance is 24000 cm
+    theta_max = pi/2;
+    P = zeros(theta_res,dist_res);
     
+    Tau_max = D_1 * dist_max;
+    Tau_min = D_1 * dist_min;
+    
+    n_theta = 0;
     for theta = linspace(-theta_max,theta_max,theta_res)
         n_theta = n_theta+1;
-        n_Tau = 0;
-        for Tau = linspace(0,Tau_max,Tau_res)
-            n_Tau = n_Tau+1;
+        
+        n_dist = 0;
+        for Tau = linspace(Tau_min,Tau_max,dist_res)
+            n_dist = n_dist+1;
             
             power = 0:1:14;
             a_H1 = exp(i*power*Tau);
             a_H = [a_H1, a_H1*exp(i*D*sin(theta))];
             a_H_E_N = a_H * E_N;
-            P(n_theta,n_Tau) = 1/(a_H_E_N * a_H_E_N');
+            P(n_theta,n_dist) = 1/(a_H_E_N * a_H_E_N');
             
         end
     end
     
-    %[theta,Tau] = meshgrid(linspace(0,2*pi,25),linspace(0,2*pi,20));
-    P(:,1:20)=[]; P(:,161:180)=[];
     
-    s = surf(linspace(0,Tau_max,Tau_res),linspace(-theta_max,theta_max,theta_res),P);
-    %s.EdgeColor = 'none';
-    xlabel('Tau'); ylabel('theta');
+    s = surf(linspace(dist_min,dist_max,dist_res),linspace(-theta_max,theta_max,theta_res),P);
+    %xlabel('Distance'); ylabel('theta');
     grid off
     
 end
