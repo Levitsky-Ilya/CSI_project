@@ -11,7 +11,6 @@ D = 2*pi*d*f/c;
 D_1 = 2*pi*f_delta/c;
 
 n_thres = 4;
-%threshold = ???
 
 x = [1:N];
 hlf1 = [1 : N_hlf]; hlf2 = [(N_hlf+1) : N];
@@ -36,31 +35,31 @@ for j = 1:4
     csi_4 = ones(M,N)*ampl4;
     
     for m = 1:M
-        csi_1(m,:) = csi_1(m,:)*exp(-i*(m-1)*D* sin1) + (rand(1,N)+i*rand(1,N))*Noise;
+        csi_1(m,:) = csi_1(m,:)*exp(-1i*(m-1)*D* sin1) + (rand(1,N)+1i*rand(1,N))*Noise;
     end
     for n = 1:N
-        csi_1(:,n) = csi_1(:,n)*exp(-i*(n-1)*D_1* dist1) + (rand(M,1)+i*rand(M,1))*Noise;
+        csi_1(:,n) = csi_1(:,n)*exp(-1i*(n-1)*D_1* dist1) + (rand(M,1)+1i*rand(M,1))*Noise;
     end
     
     for m = 1:M
-        csi_2(m,:) = csi_2(m,:)*exp(-i*(m-1)*D* sin2) + (rand(1,N)+i*rand(1,N))*Noise;
+        csi_2(m,:) = csi_2(m,:)*exp(-1i*(m-1)*D* sin2) + (rand(1,N)+1i*rand(1,N))*Noise;
     end
     for n = 1:N
-        csi_2(:,n) = csi_2(:,n)*exp(-i*(n-1)*D_1* dist2-i*pi) + (rand(M,1)+i*rand(M,1))*Noise;
+        csi_2(:,n) = csi_2(:,n)*exp(-1i*(n-1)*D_1* dist2-1i*pi) + (rand(M,1)+1i*rand(M,1))*Noise;
     end
     
     for m = 1:M
-        csi_3(m,:) = csi_3(m,:)*exp(-i*(m-1)*D* sin3) + (rand(1,N)+i*rand(1,N))*Noise;
+        csi_3(m,:) = csi_3(m,:)*exp(-1i*(m-1)*D* sin3) + (rand(1,N)+1i*rand(1,N))*Noise;
     end
     for n = 1:N
-        csi_3(:,n) = csi_3(:,n)*exp(-i*(n-1)*D_1* dist3-i*pi) + (rand(M,1)+i*rand(M,1))*Noise;
+        csi_3(:,n) = csi_3(:,n)*exp(-1i*(n-1)*D_1* dist3-1i*pi) + (rand(M,1)+1i*rand(M,1))*Noise;
     end
     
-    for m = 1:M
-        csi_4(m,:) = csi_4(m,:)*exp(-i*(m-1)*D* sin4-i*pi) + (rand(1,N)+i*rand(1,N))*Noise;
+    for m = 1:M    
+        csi_4(m,:) = csi_4(m,:)*exp(-1i*(m-1)*D* sin4-1i*pi) + (rand(1,N)+1i*rand(1,N))*Noise;
     end
     for n = 1:N
-        csi_4(:,n) = csi_4(:,n)*exp(-i*(n-1)*D_1* dist4) + (rand(M,1)+i*rand(M,1))*Noise;
+        csi_4(:,n) = csi_4(:,n)*exp(-1i*(n-1)*D_1* dist4) + (rand(M,1)+1i*rand(M,1))*Noise;
     end
     
     
@@ -68,18 +67,18 @@ for j = 1:4
 
 
     %{
-    y1_1 = [angle(csi(1,hlf1))];                        %y(i)_j - i-th antenna
+    y1_1 = angle(csi(1,hlf1));                        %y(i)_j - i-th antenna
     y1_1 = unwrap(y1_1);                               % and j-th half of spectum
-    y2_1 = [angle(csi(2,hlf1))];
+    y2_1 = angle(csi(2,hlf1));
     y2_1 = unwrap(y2_1);
-    y3_1 = [angle(csi(3,hlf1))];
+    y3_1 = angle(csi(3,hlf1));
     y3_1 = unwrap(y3_1);
     
-    y1_2 = [angle(csi(1,hlf2))];
+    y1_2 = angle(csi(1,hlf2));
     y1_2 = unwrap(y1_2);
-    y2_2 = [angle(csi(2,hlf2))];
+    y2_2 = angle(csi(2,hlf2));
     y2_2 = unwrap(y2_2);
-    y3_2 = [angle(csi(3,hlf2))];
+    y3_2 = angle(csi(3,hlf2));
     y3_2 = unwrap(y3_2);
 
     y_1 = [y1_1,y2_1,y3_1];
@@ -95,18 +94,18 @@ for j = 1:4
     for n = hlf1
         csi(:,n) = csi(:,n)*exp(-i*((n-1)*p_1(1)+p_1(2)));
     end
-    for n = hlf2
+    for n = hlf2    
         csi(:,n) = csi(:,n)*exp(-i*((n-1)*p_2(1)+p_2(2)));
     end
 
     
-    y1_1 = [angle(csi(1,hlf1))];
-    y2_1 = [angle(csi(2,hlf1))];
-    y3_1 = [angle(csi(3,hlf1))];
+    y1_1 = angle(csi(1,hlf1));
+    y2_1 = angle(csi(2,hlf1));
+    y3_1 = angle(csi(3,hlf1));
     
-    y1_2 = [angle(csi(1,hlf2))];
-    y2_2 = [angle(csi(2,hlf2))];
-    y3_2 = [angle(csi(3,hlf2))];
+    y1_2 = angle(csi(1,hlf2));
+    y2_2 = angle(csi(2,hlf2));
+    y3_2 = angle(csi(3,hlf2));
     
     y1 = unwrap([y1_1,y1_2]);
     y2 = unwrap([y2_1,y2_2]);
@@ -118,9 +117,11 @@ for j = 1:4
     grid on
     %}
     
+    csi1 = zeros(15,16);
+    csi2 = zeros(15,16);
+    csi3 = zeros(15,16);
     
-    
-    for n = 1:15
+    for n = 1:15    
         csi1(n,:) = csi(1,n:15+n);
         csi2(n,:) = csi(2,n:15+n);
         csi3(n,:) = csi(3,n:15+n);
@@ -147,8 +148,8 @@ for j = 1:4
             n_dist = n_dist+1;
             
             power = 0:1:14;
-            a_H1 = exp(i*power*Tau);
-            a_H = [a_H1, a_H1*exp(i*D*sin(theta))];
+            a_H1 = exp(1i*power*Tau);
+            a_H = [a_H1, a_H1*exp(1i*D*sin(theta))];
             a_H_E_N = a_H * E_N;
             P(n_theta,n_dist) = 1/(a_H_E_N * a_H_E_N');
             
@@ -158,7 +159,7 @@ for j = 1:4
     figure(3);
     subplot(2,2,j);
     s = surf(linspace(0,dist_max,dist_res),linspace(-theta_max,theta_max,theta_res),P);
-    %xlabel('Distance'); ylabel('theta');
+    xlabel('Distance'); ylabel('theta');
     hold on
     
 end
