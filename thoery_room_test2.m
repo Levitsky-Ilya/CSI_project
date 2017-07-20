@@ -1,6 +1,11 @@
 %%//////////////////////////////////////////////%%
-%%       Test programm for localisation of      %%
-%%      transmitter using real obtained CSI     %%
+%%       Theoretical testing programm           %%
+%%             with modeled CSI                 %%
+%%                                              %%
+%% Properties: reprogrammable amount of         %%
+%%  subcarriers and antennas. For now           %%
+%%  parameters of smoothed CSI and steering     %%
+%%  vector are edited manually.                 %%
 %%                                              %%
 %% Programmed by Levitsky Ilya 2017             %%
 %%//////////////////////////////////////////////%%
@@ -8,13 +13,12 @@
 %%%=========== SETTING UP PARAMETERS ===========%%%
 
 %%%%%%%%%%%%%%% Reciever Parameters %%%%%%%%%%%%%%%
-N = 30;             % number of subcarriers
+N = 116;            % of subcarriers
 N_hlf = floor(N/2);
-M = 3;              % number of antennas
-n_thres = 8;
+M = 2;              % of antennas
+n_thres = 4;
 packets = 10;
-
-steering_length = 15;
+steering_length = 39;
 steering_width = 2;
 
 Nsl = N-steering_length+1;
@@ -29,7 +33,9 @@ f_delta = 1250e3;   % Hz
 d = 1;              % cm
 
 D = 2*pi*d*f/c;
-D_1 = 2*pi*f_delta/c;   %Tau = D_1*distance
+D_1 = 2*pi*f_delta/c;
+
+Noise = 0.03;
 
 %%%%%%%%%%%%%%%% CSI Processing %%%%%%%%%%%%%%
 x = 1:N;
@@ -43,7 +49,7 @@ end
 
 %%%%%%%%%%%%%%%% Problem boundariues %%%%%%%%%%%%%%
 dist_res = 100; theta_res = 200;
-dist_min = -700; dist_max = 2000;    % Maximum distance is 24000 cm
+dist_min = 0; dist_max = 2000; theta_max = pi/2;    % Maximum distance is 24000 cm
 theta_max = pi/2;
 
 dist_cover = dist_max-dist_min;
@@ -66,20 +72,79 @@ sector_width  = 2*theta_max/theta_units;
 dist_coords = [];
 theta_coords = [];
 
-%%%=========== PACKET PROCCESSING BEGGINING ===========%%%
-
-csi_trace = read_bf_file('sample_data/csi-room.dat');    % collection of CSI data
-
 for j = 1:packets
 
-%%%%%%%%%%%%%%%% Getting CSI %%%%%%%%%%%%%%    
-    csi_entry = csi_trace{j};                           % 1 CSI datum
-    csi = get_scaled_csi(csi_entry);                    % making complex matrix Ntx*3*30
+    %ToF = 1.68e-8;   % s
     
-    csi(2,:,:) = [];                                    % making complex matrix 3*30
-    csi = reshape(csi,[M N]);                           %
+    %{
+    % Test 1 %
+    sin1 = -60/335.4;   dist1 = 335.4;  ampl1 = 5;
+    sin2 = 480/582.5;   dist2 = 582.5;  ampl2 = 5/5;
+    sin3 = -360/488.4;  dist3 = 488.4;  ampl3 = 5/5;
+    sin4 = -60/454.0;   dist4 = 454.0;  ampl4 = 5/5;
+    %}
+    
+    % Test 2 %
+    sin1 = 60/335.1;    dist1 = 335.1;  ampl1 = 5;
+    sin2 = 220/413.4;   dist2 = 413.4;  ampl2 = 5/5;
+    sin3 = -340/488.0;  dist3 = 488.0;  ampl3 = 5/5;
+    sin4 = 60/553.3;    dist4 = 553.3;  ampl4 = 5/5;
+    
+    %{
+    % Test 3 %
+    sin1 = 0.01;        dist1 = 200;    ampl1 = 5;
+    sin2 = 270/336;     dist2 = 336;    ampl2 = 5/5;
+    sin3 = -290/352.3;	dist3 = 352.3;  ampl3 = 5/5;
+    sin4 = 0.005;       dist4 = 700;    ampl4 = 5/5;
+    %}
+    %{
+    % Test 4 %
+    sin1 = 90/174;      dist1 = 174;    ampl1 = 5;
+    sin2 = 190/242.1;   dist2 = 242.1;  ampl2 = 5/5;
+    sin3 = -370/339.2;	dist3 = 339.2;  ampl3 = 5/5;
+    sin4 = 130/761.2;   dist4 = 761.2;  ampl4 = 5/5;
+    %}
+    
+    csi_1 = ones(M,N)*ampl1; 
+    csi_2 = ones(M,N)*ampl2;
+    csi_3 = ones(M,N)*ampl3;
+    csi_4 = ones(M,N)*ampl4;
+    
+    for m = 1:M
+        csi_1(m,:) = csi_1(m,:)*exp(-1i*(m-1)*D* sin1) + (rand(1,N)+1i*rand(1,N))*Noise;
+    end
+    for n = 1:N
+        csi_1(:,n) = csi_1(:,n)*exp(-1i*(n-1)*D_1* dist1) + (rand(M,1)+1i*rand(M,1))*Noise;
+    end
+    
+    for m = 1:M
+        csi_2(m,:) = csi_2(m,:)*exp(-1i*(m-1)*D* sin2) + (rand(1,N)+1i*rand(1,N))*Noise;
+    end
+    for n = 1:N
+        csi_2(:,n) = csi_2(:,n)*exp(-1i*(n-1)*D_1* dist2-1i*pi) + (rand(M,1)+1i*rand(M,1))*Noise;
+    end
+    
+    for m = 1:M
+        csi_3(m,:) = csi_3(m,:)*exp(-1i*(m-1)*D* sin3) + (rand(1,N)+1i*rand(1,N))*Noise;
+    end
+    for n = 1:N
+        csi_3(:,n) = csi_3(:,n)*exp(-1i*(n-1)*D_1* dist3-1i*pi) + (rand(M,1)+1i*rand(M,1))*Noise;
+    end
+    
+    for m = 1:M    
+        csi_4(m,:) = csi_4(m,:)*exp(-1i*(m-1)*D* sin4-1i*pi) + (rand(1,N)+1i*rand(1,N))*Noise;
+    end
+    for n = 1:N
+        csi_4(:,n) = csi_4(:,n)*exp(-1i*(n-1)*D_1* dist4) + (rand(M,1)+1i*rand(M,1))*Noise;
+    end
+    
+    
+    csi = csi_1+csi_2+csi_3+csi_4;
 
-%%%%%%%%%%%%%%%% Modifying CSI phase %%%%%%%%%%%%%%
+
+         
+    %{
+    
     y_1 = zeros(1,N_hlf*M);
     y_2 = zeros(1,N_hlf*M);
     
@@ -92,8 +157,9 @@ for j = 1:packets
       
     end
     
-    p_1 = polyfit(x_1, y_1, 1);            % p(1) = 2 * pi * f_delta * tau_s
-    p_2 = polyfit(x_1, y_2, 1);            % Check here!!!
+    p_1 = polyfit(x_1, y_1, 1);                               %p(1) = 2 * pi * f_delta * tau_s
+    p_2 = polyfit(x_1, y_2, 1); 
+    %}
     
     %{
     figure(1)
@@ -107,14 +173,14 @@ for j = 1:packets
     grid on; hold off;
     xlabel('Subcarrier index'); ylabel('phase');
     %}
-    
+    %{
     for n = hlf1
         csi(:,n) = csi(:,n)*exp(-1i*((n-1)*p_1(1)+p_1(2)));
     end
-    for n = hlf2
-        csi(:,n) = csi(:,n)*exp(-1i*((n-1)*p_2(1)+p_2(2)+pi/2));  % Edit pi/2!!!
+    for n = hlf2    
+        csi(:,n) = csi(:,n)*exp(-1i*((n-1)*p_2(1)+p_2(2)));
     end
-
+    %}
     %{
     figure(2)       ;???!!!
     for m = 1:M
@@ -125,7 +191,7 @@ for j = 1:packets
     grid on; hold off;
     %}
     
-%%%%%%%%%%%%%%%% Building X - smoothed CSI %%%%%%%%%%%%%%
+    
     X_sections = zeros(M,steering_length,Nsl);
     
     for m = 1:M
@@ -146,9 +212,8 @@ for j = 1:packets
       
     end
     
-%%%%%%%%%%%%%%%% Searching for Maxima %%%%%%%%%%%%%%
     [E_N,eigv] = eig(X*X');
-    E_N(:,n_thres+1:N) = [];
+    E_N(:,n_thres+1:X_width) = [];
     
     %{
     P1 = zeros(theta_res,dist_res);
@@ -160,7 +225,7 @@ for j = 1:packets
         n_dist = 0;
         for Tau = linspace(Tau_min,Tau_max,dist_res)
             n_dist = n_dist+1;
-
+            
             power = 0:1:(steering_length-1);
             a_H1 = exp(1i*power*Tau);
             a_H = [];
@@ -173,16 +238,16 @@ for j = 1:packets
             
         end
     end
-    
+  
     figure(3);
     s = surf(linspace(dist_min,dist_max,dist_res),linspace(-theta_max,theta_max,theta_res),P1);
     xlabel('Distance'); ylabel('theta');
     hold on;
     %}
     
-    
     point = 1; theta_chunk = zeros(1); dist_chunk = zeros(1);
     Tau_low = Tau_min;
+    
     for Tau_unit = 1:dist_units
         
         theta_low = - theta_max;
@@ -193,27 +258,33 @@ for j = 1:packets
                 Tau0   = rand*sector_length + Tau_low;
                 theta0 = rand*sector_width + theta_low;
                 P_par = @(theta_Tau)P(theta_Tau,E_N,steering_length,steering_width);
-                [theta_Tau0,Pval] = fminsearch(P_par,[theta0,Tau0]);
+                theta_Tau = [theta0,Tau0];
+                [theta_Tau0,Pval,exitflag,output] = fminsearch(P_par,theta_Tau);
 
-                while theta_Tau0(1) > theta_max+eps_theta || ...
-                      theta_Tau0(1) < -theta_max-eps_theta
+                if (exitflag > 0)
+                  
+                  while (theta_Tau0(1) > theta_max+eps_theta || ...
+                      theta_Tau0(1) < -theta_max-eps_theta)
                     
                     theta_shift = sign(theta_Tau0(1))*pi;
                     theta_Tau0(1) = -(theta_Tau0(1)-theta_shift);
-                end %while
+                  end %while
                    
-                theta_Tau0(2) = theta_Tau0(2) / D_1;
+                  theta_Tau0(2) = theta_Tau0(2) / D_1;
                 
-                %%!!!HARD.Make better!!!
-                if min(abs(theta_chunk-theta_Tau0(1))) > eps_theta ||...
-                   min(abs(dist_chunk-theta_Tau0(2))) > eps_dist
+                  %%!!!HARD.Make better!!!
+                  if min(abs(theta_chunk-theta_Tau0(1))) > eps_theta ||...
+                     min(abs(dist_chunk-theta_Tau0(2))) > eps_dist
                
                     point = point+1;
                     theta_chunk(point) = theta_Tau0(1);
                     dist_chunk(point) = theta_Tau0(2);
-               
+              
+                  end
+                  %%!!!HARD.Make better!!!
+                  
+                else 1
                 end
-                %%!!!HARD.Make better!!!
                 
             end %for N_point
             theta_low = theta_low + sector_width;
@@ -226,7 +297,7 @@ for j = 1:packets
     dist_coords = [dist_coords,dist_chunk];
     
 end %for j
-hold off;
+hold off
 
 %%%=========== CLUSTERING BEGGINING ===========%%%
 
@@ -235,9 +306,9 @@ replics = 5; clusters = 4;
 Y = [dist_coords;theta_coords];
 Y(1,:) = Y(1,:)/dist_cover;         % prescaling to use..
 Y(2,:) = Y(2,:)/theta_cover;        % ..sqeuclidean distance
-Y = Y'
-opts = statset('Display','final');
-[idx,C] = kmeans(Y,clusters,'Replicates',replics,'Options',opts);
+Y = Y';
+%opts = statset('Display','final');
+[idx,C] = kmeans(Y,clusters,'Replicates',replics);%,'Options',opts);
 
 % postscaling
 C(:,1) = C(:,1)*dist_cover; C(:,2) = C(:,2)*theta_cover;

@@ -1,6 +1,16 @@
+%%//////////////////////////////////////////////%%
+%%       Theoretical testing programm           %%
+%%             with modeled CSI                 %%
+%%                                              %%
+%% Properties: fixed amount of subcarriers (30) %%
+%%  and antennas (3).                           %%
+%%                                              %%
+%% Programmed by Levitsky Ilya 2017             %%
+%%//////////////////////////////////////////////%%
+
 N = 30;             % of subcarriers
 N_hlf = 15;
-M = 8;              % of antennas
+M = 3;              % of antennas
 
 c = 3e10;           % cm/s
 f = 5320e6;         % Hz
@@ -18,16 +28,38 @@ hlf1 = [1 : N_hlf]; hlf2 = [(N_hlf+1) : N];
 x_1 = [hlf1, hlf1, hlf1];
 x_2 = [hlf2, hlf2, hlf2];
 
-for j = 1:4
+for j = 1:1
 
     ToF = 1.68e-8;   % s
     Noise = 0.03;
     
+    %{
+    % Test 1 %
     sin1 = -60/335.4;   dist1 = 335.4;  ampl1 = 5;
     sin2 = 480/582.5;   dist2 = 582.5;  ampl2 = 5/5;
     sin3 = -360/488.4;  dist3 = 488.4;  ampl3 = 5/5;
     sin4 = -60/454.0;   dist4 = 454.0;  ampl4 = 5/5;
+    %}
+    %{
+    % Test 2 %
+    sin1 = 60/335.1;    dist1 = 335.1;  ampl1 = 5;
+    sin2 = 220/413.4;   dist2 = 413.4;  ampl2 = 5/5;
+    sin3 = -340/488.0;  dist3 = 488.0;  ampl3 = 5/5;
+    sin4 = 60/553.3;    dist4 = 553.3;  ampl4 = 5/5;
+    %}
+    %{
+    % Test 3 %
+    sin1 = 0.01;        dist1 = 200;    ampl1 = 5;
+    sin2 = 270/336;     dist2 = 336;    ampl2 = 5/5;
+    sin3 = -290/352.3;	dist3 = 352.3;  ampl3 = 5/5;
+    sin4 = 0.005;       dist4 = 700;    ampl4 = 5/5;
+    %}
     
+    % Test 4 %
+    sin1 = 90/174;      dist1 = 174;    ampl1 = 5;
+    sin2 = 190/242.1;   dist2 = 242.1;  ampl2 = 5/5;
+    sin3 = -370/339.2;	dist3 = 339.2;  ampl3 = 5/5;
+    sin4 = 130/761.2;   dist4 = 761.2;  ampl4 = 5/5;
     
     csi_1 = ones(M,N)*ampl1; 
     csi_2 = ones(M,N)*ampl2;
@@ -156,8 +188,7 @@ for j = 1:4
         end
     end
   
-    figure(3);
-    subplot(2,2,j);
+    figure(4);
     s = surf(linspace(0,dist_max,dist_res),linspace(-theta_max,theta_max,theta_res),P);
     xlabel('Distance'); ylabel('theta');
     hold on
