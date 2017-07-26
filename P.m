@@ -1,8 +1,6 @@
-function P = P(theta_Tau,E_N,steering_length,steering_width)
+function P = P(theta_Tau,E_N,steering_length,steering_width,f,d)
 
 c = 3e10;           % cm/s
-f = 5320e6;         % Hz
-d = 1;              % cm
 
 D = 2*pi*d*f/c;
 theta = theta_Tau(1);
