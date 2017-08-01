@@ -2,13 +2,15 @@
 %%%       Programm for localisation of           %%%
 %%%   transmitter using real CSI, obtained CSI   %%%
 %%%                 by FPGA                      %%%
+%%%     Interpolation of missing subcarriers     %%%
+%%%              with 5-deg. polynom             %%%
 %%%                                              %%%
 %%% Programmed by Levitsky Ilya 2017             %%%
 %%%//////////////////////////////////////////////%%%
 
 %%%=============== CONTROL PANEL ===============%%%
 PACK_PROC   = 1;      % PACKET PROCCESSING enable: 1
-PACKET_NO   = [10,40,70,120,140];      % Range for packets: 0 - all, other - PACKET_NO:PACKET_NO
+PACKET_NO   = 10:30;      % Range for packets: 0 - all, other - PACKET_NO:PACKET_NO
 CSI_EXTRACT = 1;      % Getting CSI enable: 1
 MOD_PHASE   = 1;      % Modifying CSI phase enable: 1
 PHASE_PLOT  = 1;      % Unwrapped and modified phase plots enable: 1
@@ -22,7 +24,7 @@ CLUST_LIKE  = 0;      % CLUSTERING and LIKEL.EST. enable: 1
 %%%%%%%%%%%%%%% Reciever Parameters %%%%%%%%%%%%%%%
 N = 117;            % of subcarriers
 M = 2;              % of antennas
-n_thres = 4;
+n_thres = 70;
 steering_len = 39;
 steering_wid = 2;
 
@@ -42,9 +44,9 @@ section_len = 26;
 
 %%%%%%%%%%%%%%% Physical Constants %%%%%%%%%%%%%%%
 c = 3e10;           % cm/s
-f = 2.4e9;        % Hz
+f = 1.176e9;        % Hz
 f_delta = 312500;   % Hz
-d = 6;           % cm
+d = 12.75;           % cm
 
 D = 2*pi*d*f/c;
 D_1 = 2*pi*f_delta/c;   %Tau = D_1*distance
@@ -75,7 +77,7 @@ eps_dist = dist_cover/(dist_res+1);
 
 %%%%%%%%%%%%%%%% Maxima Searching Param. %%%%%%%%%%%%%%
 dist_units = 4; theta_units = 4;
-pts_in_unit = 5;
+pts_in_unit = 3;
 points = dist_units * theta_units * pts_in_unit;
     
 sector_len = (Tau_max-Tau_min)/dist_units;
@@ -87,7 +89,7 @@ theta_coords = [];
 %%%=========== PACKET PROCCESSING BEGGINING ===========%%%
 if PACK_PROC
 
-fileID = fopen('MOVE_CSI_output.txt'); packets_max = 150; time_intv_max = 100000;
+fileID = fopen('Exp11_0dg_4m_12.75cm_1.18G_CSI.txt'); packets_max = 150; time_intv_max = 100000;
 
 j = 0; packet = 1; 
 csi_all = zeros(packets_max,M,N);
@@ -121,6 +123,7 @@ fclose(fileID);
 packets = packet;
 end %PACK_PROC
 
+
 if PACKET_NO
   packet_range = PACKET_NO;
 else
@@ -141,6 +144,18 @@ if MOD_PHASE
     for m = 1:M
         yM1 = angle(csi(m,valid_subcs));
         yM1 = unwrap(yM1);
+        
+        gen_subc = 1;
+        if m == 1
+            phase_fir_pack = yM1(gen_subc);
+        end
+        %2pi shifting of whole antennas
+        if  yM1(gen_subc) - phase_fir_pack > pi
+            yM1(:) = yM1(:) - 2*pi;
+        elseif yM1(gen_subc) - phase_fir_pack < -pi
+            yM1(:) = yM1(:) + 2*pi;
+        end
+
         yM = [yM,yM1];
     end
     
@@ -195,13 +210,15 @@ if MOD_PHASE
         end
     end %for m    
     
-    p = polyfit(xM, yM, 1);                 % p(1) = 2 * pi * f_delta * tau_s   
-    for n = subcarriers
-        csi(:,n) = csi(:,n)*exp(-1i*((n-1)*p(1)+p(2)));
-    end
+     p = polyfit(xM, yM, 1);                 % p(1) = 2 * pi * f_delta * tau_s 
+    
+    expMatr = exp(-1i*(repmat(subcarriers,M,1)*p(1)+ones(M,N)*p(2)));
+    csi = csi.*expMatr;
+
+  
       
 if PHASE_PLOT   
-        colour = ['r','b'];
+        colour = ['r','b','k','g'];
         figure(1)   %before
         for m = 1:M
             plot(valid_subcs,yM((1:valid_n)+(m-1)*valid_n),colour(m));
@@ -219,17 +236,20 @@ if PHASE_PLOT
         grid on;
         xlabel('Subcarrier index'); ylabel('phase');
     
-    
+%         figure(10)
+%         plot(subcarriers,unwrap(angle(csi(1,:)))-unwrap(angle(csi(2,:))),'k');
+%         hold on
+        
 end %PHASE_PLOT    
 
 end %MOD_PHASE     
 %%%%%%%%%%%%%%%% Building X - smoothed CSI %%%%%%%%%%%%%%
 if BUILD_X
-    X_sections = zeros(M,steering_len,Nsl);
+    X_sections = [];
     
     for m = 1:M
       for n = 1:steering_len
-        X_sections(m,n,:) = csi(m,n:Nsl+n-1);
+        X_sections{m}(n,:) = csi(m,n:Nsl+n-1);
       end
     end
 
@@ -238,9 +258,9 @@ if BUILD_X
       
       X_1 = [];
       for m = n:Msw+n-1
-        X_1 = [X_1,X_sections(m,:,:)];
+        X_1 = [X_1,X_sections{m}];
       end
-      X_1 = reshape(X_1,steering_len,Nsl*Msw);
+%       X_1 = reshape(X_1,steering_len,Nsl*Msw);
       X = [X;X_1];
       
     end
@@ -265,6 +285,7 @@ if P_PLOT
         end
     end
     
+    figure(3);
     surf(dist_grid,theta_grid,P_data);
 end %P_PLOT
    
@@ -293,8 +314,9 @@ if MAXIMA_P
                 theta_Tau0(2) = theta_Tau0(2) / D_1;
                 
                 %%!!!HARD.Make better!!!
-                if min(abs(theta_chunk-theta_Tau0(1))) > eps_theta ||...
-                   min(abs(dist_chunk-theta_Tau0(2))) > eps_dist
+                if (min(abs(theta_chunk-theta_Tau0(1))) > eps_theta ||...
+                   min(abs(dist_chunk-theta_Tau0(2))) > eps_dist) && ...
+                   abs(Pval) > 0
                
                     point = point+1;
                     theta_chunk(point) = theta_Tau0(1);
@@ -387,3 +409,5 @@ end
 title 'Cluster Assignments and Centroids';
 hold off;
 end %CLUST_LIKE
+
+plot(dist_coords,theta_coords,'.','MarkerSize',12);
